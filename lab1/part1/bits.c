@@ -139,6 +139,7 @@ NOTES:
  *   Rating: 1
  */
 int tmax(void) {
+  /* shifts 1 all the way to left resulting in 100...00 and flips bits to get 0111...111 the max 2's complement integer */
   int retval = 1;
 
   retval = ~(retval << 31);
