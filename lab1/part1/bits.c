@@ -154,7 +154,8 @@ int tmax(void) {
  *   Rating: 1
  */
 int isZero(int x) {
-  return !x & 1;
+  /* Compare reverse boolean of x AND'S it with 1 to return 1 if they match and 0 otherwise */ 
+  return (!x) & 1;
 }
 /* 
  * bitXor - x^y using only ~ and & 
@@ -164,8 +165,9 @@ int isZero(int x) {
  *   Rating: 1
  */
 int bitXor(int x, int y) {
-  int retval = ~(x & y);
-  retval = ~(~(x & retval) & ~(y & retval));
+  /* 2 nand gates feeding into a third nand gate, utilizes demorgans law */
+  int demorgan = ~(x & y);
+  int retval = ~(~(x & demorgan) & ~(y & demorgan));
   return retval;
 }
 /* 
@@ -176,7 +178,8 @@ int bitXor(int x, int y) {
  *   Rating: 2
  */
 int isNotEqual(int x, int y) {
-  return (x ^ y) & 1 ;
+  /* XOR x and y, if they are the same all bits will be 0 -> AND with 1 to obtain correct return value */
+  return !((!(x ^ y)) & 1);
 }
 /* 
  * sign - return 1 if positive, 0 if zero, and -1 if negative
@@ -187,7 +190,11 @@ int isNotEqual(int x, int y) {
  *  Rating: 2
  */
 int sign(int x) {
-  return 2;
+  /* get MSB -> make negative -> if input is 0 return 0, otherwise return sign obtained */
+  int sign = (x >> 31) & 1;
+  int signRetVal = (~sign) + 1;  // make negative for correct return value
+  int retVal = signRetVal = signRetVal | !!x;
+  return retVal;
 }
 /* 
  * conditional - same as x ? y : z 
@@ -197,7 +204,10 @@ int sign(int x) {
  *   Rating: 3
  */
 int conditional(int x, int y, int z) {
-  return 2;
+  /* utilize !! to get boolean value and make repeated string to compare with values in multiplixer */
+  int isTrue = (!!x << 31) >> 31;
+  int retVal = ((~isTrue) & z) | (isTrue & y);
+  return retVal;
 }
 /* 
  * replaceByte(x,n,c) - Replace byte n in x with c
@@ -210,7 +220,11 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int replaceByte(int x, int n, int c) {
-  return 2;
+  /* create masks -> set target bits to 0 -> set target bit one's with mask */
+  int mask = c << (n << 3);
+  int zeroMask = ~(255 << (n << 3));  // sets target bits to 0
+  int retVal = (x & zeroMask) | mask;
+  return retVal;
 }
 /* 
  * rotateRight - Rotate x to the right by n
@@ -221,5 +235,19 @@ int replaceByte(int x, int n, int c) {
  *   Rating: 3 
  */
 int rotateRight(int x, int n) {
-  return 2;
+  /* extract bits using mask -> shift extracted bits to left and x to right -> set extracted bits -> 
+  conditional statement to determine whether to return x or new shifted value */
+  int isTrue = (!!n << 31) >> 31;
+  int maskShifts = (31 + ((~n) + 1));
+  int leftOne = 1 << 31;
+
+  int zeroMask = ~(leftOne >> (n + ((~1) + 1)));
+  int rightMask = ~(leftOne >> maskShifts);
+  int rightBits = x & rightMask;
+  int leftMask = rightBits << (maskShifts + 1);
+
+  int shifted = x >> n;
+  int rotatedBits = ((shifted & zeroMask) | leftMask);
+  int retVal = ((~isTrue) & x) | (isTrue & rotatedBits);
+  return retVal;
 }
