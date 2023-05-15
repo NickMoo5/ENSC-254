@@ -1,11 +1,33 @@
 #include <stdio.h>
 #include "types.h"
 
+const int LEFT_ONE = 1 << 31;
+
+unsigned int getInstr(unsigned int num, int width, int pos) {
+  /* extracts a set of bits for Instruction */
+  int retVal = 0;
+  int number = num >> pos;
+  int mask = ~(LEFT_ONE >> (31 - width));
+  //mask = mask << pos;
+  retVal = number & mask;
+  return retVal;
+}
+
 /* Your task: parse the unsigned int number into an Instruction
  * extract corresponding bits to fill the rtype struct fields
  */
 Instruction parse_rtype(unsigned int number) {
   Instruction instr;  
+  //int leftOne = 1 << 31;
+  //int opCodeMask = ~(leftOne >> 24);
+  //int* numptr = (int*)&instr.rtype;
+  //printf("testing: %d\n", instr.rtype.opcode);
+  instr.rtype.opcode = getInstr(number, 7, 0);
+  instr.rtype.rd = getInstr(number, 5, 7);
+  instr.rtype.funct3 = getInstr(number, 3, 12);
+  instr.rtype.rs1 = getInstr(number, 5, 15);
+  instr.rtype.rs2 = getInstr(number, 5, 20);
+  instr.rtype.funct7 = getInstr(number, 7, 25);
   return instr;
 }
 
@@ -14,6 +36,11 @@ Instruction parse_rtype(unsigned int number) {
  */
 Instruction parse_itype(unsigned int number) {
   Instruction instr;
+  instr.itype.opcode = getInstr(number, 7, 0);
+  instr.itype.rd = getInstr(number, 5, 7);
+  instr.itype.funct3 = getInstr(number, 3, 12);
+  instr.itype.rs1 = getInstr(number, 5, 15);
+  instr.itype.imm = getInstr(number, 12, 20);
   return instr;
 }
 
