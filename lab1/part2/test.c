@@ -8,7 +8,6 @@ unsigned int getInstr(unsigned int num, int width, int pos) {
   int retVal = 0;
   int number = num >> pos;
   int mask = ~(LEFT_ONE >> (31 - width));
-  //mask = mask << pos;
   retVal = number & mask;
   return retVal;
 }
@@ -18,10 +17,6 @@ unsigned int getInstr(unsigned int num, int width, int pos) {
  */
 Instruction parse_rtype(unsigned int number) {
   Instruction instr;  
-  //int leftOne = 1 << 31;
-  //int opCodeMask = ~(leftOne >> 24);
-  //int* numptr = (int*)&instr.rtype;
-  //printf("testing: %d\n", instr.rtype.opcode);
   instr.rtype.opcode = getInstr(number, 7, 0);
   instr.rtype.rd = getInstr(number, 5, 7);
   instr.rtype.funct3 = getInstr(number, 3, 12);
