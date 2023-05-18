@@ -14,6 +14,7 @@ void head_insert(NodePtr& head, int the_number) {
 }
 
 void insert(NodePtr after_me, int the_number) {
+  if (after_me == NULL) return;
   NodePtr temp_ptr;
   temp_ptr = new Node;
 
