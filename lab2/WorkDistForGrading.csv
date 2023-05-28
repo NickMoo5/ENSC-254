@@ -1,0 +1,23 @@
+,(ONLY MODIFY THIS COLUMN),,,,,,,
+LAB Group:,,,,,EXAMPLE:,LAB Group:,LA0X-0X,
+Student A Comp ID:,,,,,,Student A Comp ID:,ksl24,
+Student B Comp ID:,,,,,,Student B Comp ID:,dst5,
+Test 1 : test_sign_extend_number - 1 point,,,,,,Test 1 : test_sign_extend_number - 1 point,B,"`-> dst5 was responsible for this, because dst5 is Student B"
+Test 1: test_parse_instruction_rtype - 1 point,,,,,,Test 1: test_parse_instruction_rtype - 1 point,A,"`-> ksl24 was responsible for this, because ksl24 is Student A"
+Test1: test_parse_instruction_itype - 1 point,,,,,,Test1: test_parse_instruction_itype - 1 point,B,
+Test1: test_parse_instruction_stype - 1 point,,,,,,Test1: test_parse_instruction_stype - 1 point,B,
+Test1: test_parse_instruction_sbtype - 1 point,,,,,,Test1: test_parse_instruction_sbtype - 1 point,A,
+Test1: test_parse_instruction_ujtype - 1 point,,,,,,Test1: test_parse_instruction_ujtype - 1 point,A,
+Test1: test_parse_instruction_utype - 1 point,,,,,,Test1: test_parse_instruction_utype - 1 point,B,
+Test1: test_get_branch_offset - 1 point,,,,,,Test1: test_get_branch_offset - 1 point,A,
+Test1: test_get_jump_offset - 1 point,,,,,,Test1: test_get_jump_offset - 1 point,A,
+Test1: test_get_store_offset - 1 point,,,,,,Test1: test_get_store_offset - 1 point,B,
+Test2: R-type instructions in code/input/R/R.input - 7 points,,,,,,Test2: R-type instructions in code/input/R/R.input - 7 points,A,
+Test2: I-type instructions in code/input/I/I.input - 6 points,,,,,,Test2: I-type instructions in code/input/I/I.input - 6 points,A,
+Test2: I-type instructions in code/input/I/L.input - 13 points,,,,,,Test2: I-type instructions in code/input/I/L.input - 13 points,B,
+Test2: S-type instructions in code/input/S/S.input - 10 points,,,,,,Test2: S-type instructions in code/input/S/S.input - 10 points,B,
+Test2: SB-type instructions in code/input/SB/SB.input - 10 points,,,,,,Test2: SB-type instructions in code/input/SB/SB.input - 10 points,A,
+Test2: U-type instructions in code/input/U/U.input - 10 points,,,,,,Test2: U-type instructions in code/input/U/U.input - 10 points,B,
+Test2: UJ-type instructions in code/input/UJ/UJ.input - 9 points,,,,,,Test2: UJ-type instructions in code/input/UJ/UJ.input - 9 points,A,
+Test3: multiply testcase code/input/multiply.input - 24 points,,,,,,Test3: multiply testcase code/input/multiply.input - 24 points,AB,`-> Both ksl24 and dst5 were responsible for this (50/50)
+Test3: random testcase code/input/random.input - 21 points,,,,,,Test3: random testcase code/input/random.input - 21 points,AB,
