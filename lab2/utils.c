@@ -38,7 +38,7 @@ Instruction parse_instruction(uint32_t instruction_bits) {
     break;
   // cases for other types of instructions
   /* YOUR CODE HERE */
-
+  /* test comment*/
   #ifndef TESTING
   default:
     exit(EXIT_FAILURE);
