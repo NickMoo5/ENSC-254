@@ -38,7 +38,92 @@ Instruction parse_instruction(uint32_t instruction_bits) {
     break;
   // cases for other types of instructions
   /* YOUR CODE HERE */
-  /* test comment2*/
+  case 0x03 || 0x13:    // I type
+    instruction.itype.rd = instruction_bits & ((1U << 5) - 1);
+    instruction_bits >>= 5;
+
+    instruction.itype.funct3 = instruction_bits & ((1U << 3) - 1);
+    instruction_bits >>= 3;
+
+    instruction.itype.rs1 = instruction_bits & ((1U << 5) - 1);
+    instruction_bits >>= 5;
+
+    instruction.itype.imm = instruction_bits & ((1U << 12) - 1);
+    instruction_bits >>= 12;
+    break;
+  case 0x13:    // I type
+    instruction.itype.rd = instruction_bits & ((1U << 5) - 1);
+    instruction_bits >>= 5;
+
+    instruction.itype.funct3 = instruction_bits & ((1U << 3) - 1);
+    instruction_bits >>= 3;
+
+    instruction.itype.rs1 = instruction_bits & ((1U << 5) - 1);
+    instruction_bits >>= 5;
+
+    instruction.itype.imm = instruction_bits & ((1U << 12) - 1);
+    instruction_bits >>= 12;
+    break;
+  case 0x73:    // I type
+    instruction.itype.rd = instruction_bits & ((1U << 5) - 1);
+    instruction_bits >>= 5;
+
+    instruction.itype.funct3 = instruction_bits & ((1U << 3) - 1);
+    instruction_bits >>= 3;
+
+    instruction.itype.rs1 = instruction_bits & ((1U << 5) - 1);
+    instruction_bits >>= 5;
+
+    instruction.itype.imm = instruction_bits & ((1U << 12) - 1);
+    instruction_bits >>= 12;
+    break;
+  case 0x23:    // S type
+    instruction.stype.imm5 = instruction_bits & ((1U << 5) - 1);
+    instruction_bits >>= 5;
+
+    instruction.stype.funct3 = instruction_bits & ((1U << 3) - 1);
+    instruction_bits >>= 3;
+
+    instruction.stype.rs1 = instruction_bits & ((1U << 5) - 1);
+    instruction_bits >>= 5;
+
+    instruction.stype.rs2 = instruction_bits & ((1U << 5) - 1);
+    instruction_bits >>= 5;
+
+    instruction.stype.imm7 = instruction_bits & ((1U << 7) - 1);
+    instruction_bits >>= 7;
+    break;
+  case 0x63:    // SB type
+    instruction.sbtype.imm5 = instruction_bits & ((1U << 5) - 1);
+    instruction_bits >>= 5;
+
+    instruction.sbtype.funct3 = instruction_bits & ((1U << 3) - 1);
+    instruction_bits >>= 3;
+
+    instruction.sbtype.rs1 = instruction_bits & ((1U << 5) - 1);
+    instruction_bits >>= 5;
+
+    instruction.sbtype.rs2 = instruction_bits & ((1U << 5) - 1);
+    instruction_bits >>= 5;
+
+    instruction.sbtype.imm7 = instruction_bits & ((1U << 7) - 1);
+    instruction_bits >>= 7;
+    break;
+  case 0x37:    // U type
+    instruction.utype.rd = instruction_bits & ((1U << 5) - 1);
+    instruction_bits >>= 5;
+
+    instruction.utype.imm = instruction_bits & ((1U << 20) - 1);
+    instruction_bits >>= 20;
+    break;
+  case 0x6f:    // UJ type
+    instruction.ujtype.rd = instruction_bits & ((1U << 5) - 1);
+    instruction_bits >>= 5;
+
+    instruction.ujtype.imm = instruction_bits & ((1U << 20) - 1);
+    instruction_bits >>= 20;
+    break;
+
   #ifndef TESTING
   default:
     exit(EXIT_FAILURE);
@@ -55,8 +140,9 @@ Instruction parse_instruction(uint32_t instruction_bits) {
 /* Sign extends the given field to a 32-bit integer where field is
  * interpreted an n-bit integer. */
 int sign_extend_number(unsigned int field, unsigned int n) {
-  /* YOUR CODE HERE */
-  return 0;
+  int shift = 32 - n;
+  unsigned int signExtended = ((int)field << shift) >> shift;
+  return signExtended;
 }
 
 /* Return the number of bytes (from the current PC) to the branch label using
