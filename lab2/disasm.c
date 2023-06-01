@@ -257,7 +257,7 @@ void print_lui(Instruction instruction) {
 }
 
 void print_jal(Instruction instruction) {
-    printf(JAL_FORMAT, instruction.ujtype.rd, get_jump_offset(instruction));
+    printf(JAL_FORMAT, instruction.ujtype.rd, sign_extend_number(get_jump_offset(instruction), 20));
 }
 
 void print_ecall(Instruction instruction) {
