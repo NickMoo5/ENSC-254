@@ -57,9 +57,9 @@ void write_rtype(Instruction instruction) {
         case 0x0:
             switch (instruction.rtype.funct7) {
                 case 0x0:
-		  print_rtype("add", instruction);
+		            print_rtype("add", instruction);
                     break;
-		    case 0x1:
+		        case 0x1:
                     print_rtype("mul", instruction);
                     break;
                 case 0x20:
@@ -69,11 +69,66 @@ void write_rtype(Instruction instruction) {
                     handle_invalid_instruction(instruction);
                 break;      
             }
+        case 0x1: 
+            switch (instruction.rtype.funct7) {
+                case 0x0:
+                    print_rtype("sll", instruction);
+                    break;
+                case 0x1:
+                    print_rtype("mulh", instruction);
+                    break;
+                default: 
+                    handle_invalid_instruction(instruction);
+                break;
+            }
+        case 0x2:
+            print_rtype("slt", instruction);
+            break;
+        case 0x4: 
+            switch (instruction.rtype.funct7) {
+                case 0x0:
+                    print_rtype("xor", instruction);
+                    break;
+                case 0x1: 
+                    print_rtype("div", instruction);
+                    break;
+                default:
+                    handle_invalid_instruction(instruction);
+                break;
+            }
+        case 0x5:
+            switch (instruction.rtype.funct7) {
+                case 0x0:
+                    print_rtype("srl", instruction);
+                    break;
+                case 0x20:
+                    print_rtype("sra", instruction);
+                    break; 
+                default: 
+                    handle_invalid_instruction(instruction);
+                    break;
+            }
+        case 0x6:
+            switch (instruction.rtype.funct7) {
+                case 0x0:
+                    print_rtype("or", instruction);
+                    break;
+                case 0x1:
+                    print_rtype("rem", instruction);
+                    break;
+                default:
+                    handle_invalid_instruction(instruction);
+                    break;
+            }
+        case 0x7:
+            print_rtype("and", instruction);
+            break;
+        default:
+            handle_invalid_instruction(instruction);
             break;
         /* YOUR CODE HERE */
         /* call print_rtype */
-        default:
-            handle_invalid_instruction(instruction);
+
         break;
     }
 }
@@ -90,8 +145,15 @@ void write_itype_except_load(Instruction instruction) {
 
 void write_load(Instruction instruction) {
     switch (instruction.itype.funct3) {
-      /* YOUR CODE HERE */
-      /* call print_load */
+        case 0x0: 
+            print_itype("lb rd", instruction);
+            break;
+        case 0x1:
+            print_itype("lh rd", instruction);
+            break;
+        case 0x2:
+            print_itype("lw rd", instruction);
+            break;
         default:
             handle_invalid_instruction(instruction);
             break;
@@ -100,6 +162,15 @@ void write_load(Instruction instruction) {
 
 void write_store(Instruction instruction) {
     switch (instruction.stype.funct3) {
+        case 0x0:
+            print_store("sb", instruction);
+            break;
+        case 0x1:
+            print_store("sh", instruction);
+            break;
+        case 0x2:
+            print_store("sw", instruction);
+            break;
       /* YOUR CODE HERE */
       /* call print_store */
         default:
@@ -110,6 +181,12 @@ void write_store(Instruction instruction) {
 
 void write_branch(Instruction instruction) {
     switch (instruction.sbtype.funct3) {
+        case 0x0:
+            print_branch("beq", instruction);
+            break;
+        case 0x1:
+            print_branch("bne", instruction);
+            break;
       /* YOUR CODE HERE */
       /* call print_branch */
         default:
