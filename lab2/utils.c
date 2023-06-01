@@ -170,8 +170,8 @@ int get_jump_offset(Instruction instruction) {
 /* Returns the number of bytes (from the current PC) to the base address using the
  * given store instruction */
 int get_store_offset(Instruction instruction) {
-  int base = instruction.sbtype.imm5;
-  int imm11to5Mask = (instruction.sbtype.imm7 << 5);
+  int base = instruction.stype.imm5;
+  int imm11to5Mask = (instruction.stype.imm7 << 5);
   int fullInstr = (base | imm11to5Mask); 
   return fullInstr;
 }
