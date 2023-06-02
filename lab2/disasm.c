@@ -69,6 +69,7 @@ void write_rtype(Instruction instruction) {
                     handle_invalid_instruction(instruction);
                 break;      
             }
+            break;
         case 0x1: 
             switch (instruction.rtype.funct7) {
                 case 0x0:
@@ -81,6 +82,7 @@ void write_rtype(Instruction instruction) {
                     handle_invalid_instruction(instruction);
                 break;
             }
+            break;
         case 0x2:
             print_rtype("slt", instruction);
             break;
@@ -96,6 +98,7 @@ void write_rtype(Instruction instruction) {
                     handle_invalid_instruction(instruction);
                 break;
             }
+            break;
         case 0x5:
             switch (instruction.rtype.funct7) {
                 case 0x0:
@@ -108,6 +111,7 @@ void write_rtype(Instruction instruction) {
                     handle_invalid_instruction(instruction);
                     break;
             }
+            break;
         case 0x6:
             switch (instruction.rtype.funct7) {
                 case 0x0:
@@ -120,6 +124,7 @@ void write_rtype(Instruction instruction) {
                     handle_invalid_instruction(instruction);
                     break;
             }
+            break;
         case 0x7:
             print_rtype("and", instruction);
             break;
@@ -152,13 +157,16 @@ void write_itype_except_load(Instruction instruction) {
                     print_itype_except_load("xori", instruction, instruction.itype.imm);
                     break;
                 case 0x5:
-                    switch (instruction.itype.imm) {
-                        case 0x00:
-                            print_itype_except_load("srli", instruction, 0x00);
+                    switch (instruction.itype.imm >> 5) {
+                        case 0x0:
+                            print_itype_except_load("srli", instruction, instruction.itype.imm & ((1U << 5) - 1));
                             break;
                         case 0x20:
-                            print_itype_except_load("srai", instruction, 0x20);
+                            print_itype_except_load("srai", instruction, instruction.itype.imm & ((1U << 5) - 1));
                             break;
+                        default:
+                            handle_invalid_instruction(instruction);
+                        break; 
                     }
                     break;
                 case 0x6:
@@ -168,7 +176,6 @@ void write_itype_except_load(Instruction instruction) {
                     print_itype_except_load("andi", instruction, instruction.itype.imm);
                     break;
             //}
-            
                 default:
                     handle_invalid_instruction(instruction);
                 break;  
@@ -228,8 +235,8 @@ void write_branch(Instruction instruction) {
 }
 
 void print_rtype(char *name, Instruction instruction) {
-  printf(RTYPE_FORMAT, name, instruction.rtype.rd, instruction.rtype.rs1,
-         instruction.rtype.rs2);
+    printf(RTYPE_FORMAT, name, instruction.rtype.rd, instruction.rtype.rs1,
+        instruction.rtype.rs2);
 }
 
 void print_itype_except_load(char *name, Instruction instruction, int imm) {

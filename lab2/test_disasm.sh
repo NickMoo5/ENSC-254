@@ -11,7 +11,7 @@ echo "diff ./code/out/I/L.solution ./code/ref/I/L.solution"
 diff ./code/out/I/L.solution ./code/ref/I/L.solution
 #S-type: 10 points
 ./riscv -d ./code/input/S/S.input > ./code/out/S/S.solution
-echo "diff ./code/out/I/L.solution ./code/ref/I/L.solution"
+echo "diff ./code/out/S/S.solution ./code/ref/S/S.solution"
 diff ./code/out/S/S.solution ./code/ref/S/S.solution
 #SB-type: 10 points
 ./riscv -d ./code/input/SB/SB.input > ./code/out/SB/SB.solution
