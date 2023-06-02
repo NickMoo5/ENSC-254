@@ -52,7 +52,6 @@ void decode_instruction(uint32_t instruction_bits) {
 }
 
 void write_rtype(Instruction instruction) {
-    /* YOUR CODE HERE */
     switch (instruction.rtype.funct3) {
         case 0x0:
             switch (instruction.rtype.funct7) {
@@ -131,54 +130,49 @@ void write_rtype(Instruction instruction) {
         default:
             handle_invalid_instruction(instruction);
             break;
-        /* YOUR CODE HERE */
-        /* call print_rtype */
-
         break;
     }
 }
 
 void write_itype_except_load(Instruction instruction) {
     switch (instruction.itype.funct3) {
-      /* YOUR CODE HERE */
-      /* call print_itype_except_load */
-        //case 0x13:
-            //switch (instruction.itype.funct3) {
+        case 0x0:
+            print_itype_except_load("addi", instruction, instruction.itype.imm);
+            break;
+        case 0x1:
+            print_itype_except_load("slli", instruction, instruction.itype.imm);
+            break;
+        case 0x2:
+            print_itype_except_load("slti", instruction, instruction.itype.imm);
+            break;
+        case 0x4:
+            print_itype_except_load("xori", instruction, instruction.itype.imm);
+            break;
+        case 0x5:
+            switch (instruction.itype.imm >> 5) {   // left 7 bits are funct7
                 case 0x0:
-                    print_itype_except_load("addi", instruction, instruction.itype.imm);
+                    // right 5 bits are imm
+                    print_itype_except_load("srli", instruction, instruction.itype.imm & ((1U << 5) - 1));
                     break;
-                case 0x1:
-                    print_itype_except_load("slli", instruction, instruction.itype.imm);
+                case 0x20:
+                    // right 5 bits are imm
+                    print_itype_except_load("srai", instruction, instruction.itype.imm & ((1U << 5) - 1));
                     break;
-                case 0x2:
-                    print_itype_except_load("slti", instruction, instruction.itype.imm);
-                    break;
-                case 0x4:
-                    print_itype_except_load("xori", instruction, instruction.itype.imm);
-                    break;
-                case 0x5:
-                    switch (instruction.itype.imm >> 5) {
-                        case 0x0:
-                            print_itype_except_load("srli", instruction, instruction.itype.imm & ((1U << 5) - 1));
-                            break;
-                        case 0x20:
-                            print_itype_except_load("srai", instruction, instruction.itype.imm & ((1U << 5) - 1));
-                            break;
-                        default:
-                            handle_invalid_instruction(instruction);
-                        break; 
-                    }
-                    break;
-                case 0x6:
-                    print_itype_except_load("ori", instruction, instruction.itype.imm);
-                    break;
-                case 0x7:
-                    print_itype_except_load("andi", instruction, instruction.itype.imm);
-                    break;
-            //}
                 default:
                     handle_invalid_instruction(instruction);
-                break;  
+                break; 
+            }
+            break;
+        case 0x6:
+            print_itype_except_load("ori", instruction, instruction.itype.imm);
+            break;
+        case 0x7:
+            print_itype_except_load("andi", instruction, instruction.itype.imm);
+            break;
+    
+        default:
+            handle_invalid_instruction(instruction);
+        break;  
     }
 }
 
@@ -210,8 +204,6 @@ void write_store(Instruction instruction) {
         case 0x2:
             print_store("sw", instruction);
             break;
-      /* YOUR CODE HERE */
-      /* call print_store */
         default:
             handle_invalid_instruction(instruction);
             break;
@@ -226,8 +218,6 @@ void write_branch(Instruction instruction) {
         case 0x1:
             print_branch("bne", instruction);
             break;
-      /* YOUR CODE HERE */
-      /* call print_branch */
         default:
             handle_invalid_instruction(instruction);
             break;

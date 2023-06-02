@@ -36,9 +36,7 @@ Instruction parse_instruction(uint32_t instruction_bits) {
     // funct7: 0000 000
     instruction.rtype.funct7 = instruction_bits & ((1U << 7) - 1);
     break;
-  // cases for other types of instructions
-  /* YOUR CODE HERE */
-  case 0x03:    // I type
+  case 0x03:    // I type Load
     instruction.itype.rd = instruction_bits & ((1U << 5) - 1);
     instruction_bits >>= 5;
 
@@ -51,7 +49,7 @@ Instruction parse_instruction(uint32_t instruction_bits) {
     instruction.itype.imm = instruction_bits & ((1U << 12) - 1);
     instruction_bits >>= 12;
     break;
-  case 0x13:    // I type
+  case 0x13:    // I type (no load)
     instruction.itype.rd = instruction_bits & ((1U << 5) - 1);
     instruction_bits >>= 5;
 
@@ -64,7 +62,7 @@ Instruction parse_instruction(uint32_t instruction_bits) {
     instruction.itype.imm = instruction_bits & ((1U << 12) - 1);
     instruction_bits >>= 12;
     break;
-  case 0x73:    // I type
+  case 0x73:    // I type (ecall)
     instruction.itype.rd = instruction_bits & ((1U << 5) - 1);
     instruction_bits >>= 5;
 
@@ -123,7 +121,6 @@ Instruction parse_instruction(uint32_t instruction_bits) {
     instruction.ujtype.imm = instruction_bits & ((1U << 20) - 1);
     instruction_bits >>= 20;
     break;
-
   #ifndef TESTING
   default:
     exit(EXIT_FAILURE);
@@ -140,8 +137,8 @@ Instruction parse_instruction(uint32_t instruction_bits) {
 /* Sign extends the given field to a 32-bit integer where field is
  * interpreted an n-bit integer. */
 int sign_extend_number(unsigned int field, unsigned int n) {
-  int shift = 32 - n;
-  unsigned int signExtended = ((int)field << shift) >> shift;
+  int shift = 32 - n; 
+  unsigned int signExtended = ((int)field << shift) >> shift;   // shift field to the left and back to right to sign extend
   return signExtended;
 }
 
@@ -149,21 +146,21 @@ int sign_extend_number(unsigned int field, unsigned int n) {
  * the given branch instruction */
 int get_branch_offset(Instruction instruction) {
   int base = instruction.sbtype.imm5 >> 1;
-  int imm10to5Mask = (instruction.sbtype.imm7 & 0x3F) << 4;
+  int imm10to5Mask = (instruction.sbtype.imm7 & 0x3F) << 4;   // bit mask and shift
   int imm11Mask = (instruction.sbtype.imm5 & 1U) << 10;
   int imm12Mask = (instruction.sbtype.imm7 >> 6) << 11;
-  int fullInstr = (base | imm10to5Mask | imm11Mask | imm12Mask) << 1; 
+  int fullInstr = (base | imm10to5Mask | imm11Mask | imm12Mask) << 1;   // combine
   return fullInstr;
 }
 
 /* Returns the number of bytes (from the current PC) to the jump label using the
  * given jump instruction */
 int get_jump_offset(Instruction instruction) {
-  int base = (instruction.ujtype.imm >> 9) & 0x3FF;
+  int base = (instruction.ujtype.imm >> 9) & 0x3FF;     // bit mask 
   int imm11Mask = ((instruction.ujtype.imm >> 8) & 1U) << 10;
   int imm19to12Mask = (instruction.ujtype.imm & 0xFF) << 11;
   int imm20 = ((instruction.ujtype.imm >> 19) & 1U) << 19;
-  int fullInstr = (base | imm11Mask | imm19to12Mask | imm20) << 1; 
+  int fullInstr = (base | imm11Mask | imm19to12Mask | imm20) << 1;  // combine
   return fullInstr;
 }
 
@@ -172,7 +169,7 @@ int get_jump_offset(Instruction instruction) {
 int get_store_offset(Instruction instruction) {
   int base = instruction.stype.imm5;
   int imm11to5Mask = (instruction.stype.imm7 << 5);
-  int fullInstr = (base | imm11to5Mask); 
+  int fullInstr = base | imm11to5Mask;    // combine 
   return fullInstr;
 }
 /************************Helper functions************************/
