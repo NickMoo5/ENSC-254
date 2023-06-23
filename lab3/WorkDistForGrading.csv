@@ -1,0 +1,13 @@
+,(ONLY MODIFY THIS COLUMN),,,,,,,
+LAB Group:,,,,,EXAMPLE:,LAB Group:,LA0X-0X,
+Student A Comp ID:,,,,,,Student A Comp ID:,ksl24,
+Student B Comp ID:,,,,,,Student B Comp ID:,dst5,
+Test1: R-type instructions in code/input/Ri/Ri.input - 7 points,,,,,,Test1: R-type instructions in code/input/Ri/Ri.input - 7 points,A,"`-> ksl24 was responsible for this, because ksl24 is Student A"
+Test1: I-type instructions in code/input/I/I.input - 13 points,,,,,,Test1: I-type instructions in code/input/I/I.input - 13 points,B,"`-> dst5 was responsible for this, because dst5 is Student B"
+Test1: I-type instructions in code/input/I/L.input - 6 points,,,,,,Test1: I-type instructions in code/input/I/L.input - 6 points,A,
+Test1: S-type instructions in code/input/S/S.input - 10 points,,,,,,Test1: S-type instructions in code/input/S/S.input - 10 points,B,
+Test1: SB-type instructions in code/input/SB/SB.input - 10 points,,,,,,Test1: SB-type instructions in code/input/SB/SB.input - 10 points,A,
+Test1: U-type instructions in code/input/U/U.input - 10 points,,,,,,Test1: U-type instructions in code/input/U/U.input - 10 points,B,
+Test1: UJ-type instructions in code/input/UJ/UJ.input - 9 points,,,,,,Test1: UJ-type instructions in code/input/UJ/UJ.input - 9 points,A,
+Test2: multiply testcase code/input/multiply.input - 15 points,,,,,,Test2: multiply testcase code/input/multiply.input - 15 points,AB,`-> Both ksl24 and dst5 were responsible for this (50/50)
+Test2: random testcase code/input/random.input - 15 points,,,,,,Test2: random testcase code/input/random.input - 15 points,AB,`-> Both ksl24 and dst5 were responsible for this (50/50)
