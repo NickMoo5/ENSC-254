@@ -360,17 +360,7 @@ void execute_lui(Instruction instruction, Processor *processor) {
 }
 
 void store(Byte *memory, Address address, Alignment alignment, Word value) {
-    if(alignment == LENGTH_BYTE) {
-        return memory[address];
-    } else if(alignment == LENGTH_HALF_WORD) {
-        return (memory[address+1] << 8) + memory[address];
-    } else if(alignment == LENGTH_WORD) {
-        return (memory[address+3] << 24) + (memory[address+2] << 16)
-               + (memory[address+1] << 8) + memory[address];
-    } else {
-        printf("Error: Unrecognized alignment %d\n", alignment);
-        exit(-1);
-    }
+    
 }
 
 Word load(Byte *memory, Address address, Alignment alignment) {
