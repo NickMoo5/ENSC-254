@@ -118,14 +118,14 @@ void execute_rtype(Instruction instruction, Processor *processor) {
                 case 0x0:
                     // shift right logical
                     processor->R[instruction.rtype.rd] = 
-                        ((sWord)processor->R[instruction.rtype.rs1]) >> 
-                        ((sWord)processor->R[instruction.rtype.rs2]);
+                        ((Word)processor->R[instruction.rtype.rs1]) >> 
+                        ((Word)processor->R[instruction.rtype.rs2]);
                     break;
                 case 0x2:
                     // shift right arithmetic
                     processor->R[instruction.rtype.rd] = 
-                        sign_extend_number(((sWord)processor->R[instruction.rtype.rs1]) >>  
-                        (sWord)processor->R[instruction.rtype.rs2], 32);
+                        (sWord)(((sWord)processor->R[instruction.rtype.rs1]) >>  
+                        (Word)processor->R[instruction.rtype.rs2]);
                     break;
                 default:
                     handle_invalid_instruction(instruction);
@@ -142,8 +142,8 @@ void execute_rtype(Instruction instruction, Processor *processor) {
         case 0x3:
             // set less than ( unsigned)
             processor->R[instruction.rtype.rd] = 
-                sign_extend_number((((Word)processor->R[instruction.rtype.rs1]) < 
-                ((Word)processor->R[instruction.rtype.rs2])) ? 1 : 0, 32);
+                (((Word)processor->R[instruction.rtype.rs1]) < 
+                ((Word)processor->R[instruction.rtype.rs2])) ? 1 : 0;
             break;
         default:
             handle_invalid_instruction(instruction);
@@ -160,31 +160,31 @@ void execute_itype_except_load(Instruction instruction, Processor *processor) {
             //addi
             processor->R[instruction.itype.rd] = 
                 ((sWord)processor->R[instruction.itype.rs1]) + 
-                ((sWord)sign_extend_number(instruction.itype.imm, 12));
+                (sWord)sign_extend_number(instruction.itype.imm, 12);
             break;
         case 0x4:
             //xori
             processor->R[instruction.itype.rd] = 
-                ((sWord)processor->R[instruction.itype.rs1]) ^ 
-                ((sWord)sign_extend_number(instruction.itype.imm, 12));
+                ((Word)processor->R[instruction.itype.rs1]) ^ 
+                (Word)(instruction.itype.imm | 0x00000000);
             break;
         case 0x6:
             //ori
             processor->R[instruction.itype.rd] = 
-                ((sWord)processor->R[instruction.itype.rs1]) | 
-                ((sWord)sign_extend_number(instruction.itype.imm, 12));
+                ((Word)processor->R[instruction.itype.rs1]) | 
+                (Word)(instruction.itype.imm | 0x00000000);
             break;
         case 0x7:
             //andi
             processor->R[instruction.itype.rd] = 
-                ((sWord)processor->R[instruction.itype.rs1]) & 
-                ((sWord)sign_extend_number(instruction.itype.imm, 12));
+                ((Word)processor->R[instruction.itype.rs1]) & 
+                ((Word)(instruction.itype.imm | 0x00000000));
             break;
         case 0x1:
             //slli
             processor->R[instruction.itype.rd] = 
-                ((sWord)processor->R[instruction.itype.rs1]) << 
-                ((sWord)sign_extend_number(instruction.itype.imm & ((1U << 5) - 1), 12));
+                ((Word)processor->R[instruction.itype.rs1]) << 
+                ((Word)instruction.itype.imm & ((1U << 5) - 1));
             break;
         case 0x5:
             switch (instruction.itype.imm >> 5) {
@@ -193,14 +193,14 @@ void execute_itype_except_load(Instruction instruction, Processor *processor) {
                     // right 5 bits are imm
                     processor->R[instruction.itype.rd] = 
                         ((Word)processor->R[instruction.itype.rs1]) >> 
-                        ((Word)sign_extend_number(instruction.itype.imm & ((1U << 5) - 1), 12));
+                        ((Word)instruction.itype.imm & ((1U << 5) - 1));
                     break;
                 case 0x20:
                     //srai
                     // right 5 bits are imm
                     processor->R[instruction.itype.rd] = 
                         ((sWord)processor->R[instruction.itype.rs1]) >> 
-                        ((sWord)sign_extend_number(instruction.itype.imm & ((1U << 5) - 1), 12));
+                        ((sWord)sign_extend_number(instruction.itype.imm & ((1U << 5) - 1), 5));
                     break;
                 default:
                     handle_invalid_instruction(instruction);
@@ -210,7 +210,7 @@ void execute_itype_except_load(Instruction instruction, Processor *processor) {
             }
             break;
         case 0x2:
-            //slti
+                //slti
                 processor->R[instruction.itype.rd] = 
                 (((sWord)processor->R[instruction.itype.rs1]) < 
                 ((sWord)sign_extend_number(instruction.itype.imm, 12))) ? 1 : 0;
