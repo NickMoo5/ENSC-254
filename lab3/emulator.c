@@ -257,7 +257,6 @@ void execute_ecall(Processor *p, Byte *memory) {
 void execute_branch(Instruction instruction, Processor *processor) {
     switch (instruction.sbtype.funct3) {
         case 0x0:
-            //sWord offset = sign_extend_number(get_branch_offset(instruction), 12);
             if ((sWord)processor->R[instruction.sbtype.rs1] == (sWord)processor->R[instruction.sbtype.rs2]) {
                 processor->PC += get_branch_offset(instruction);
             } else {
@@ -265,7 +264,6 @@ void execute_branch(Instruction instruction, Processor *processor) {
             }
             break;
         case 0x1:
-            //sWord offset = sign_extend_number(get_branch_offset(instruction), 12);
             if (processor->R[instruction.sbtype.rs1] != processor->R[instruction.sbtype.rs2]) {
                 processor->PC += get_branch_offset(instruction);
             } else {
@@ -282,27 +280,16 @@ void execute_branch(Instruction instruction, Processor *processor) {
 void execute_load(Instruction instruction, Processor *processor, Byte *memory) {
     switch (instruction.itype.funct3) {
         case 0x0:
-            processor->R[instruction.itype.rd] = 
-                sign_extend_number(memory[((sWord)processor->R[instruction.itype.rs1]) + 
-                    ((sWord)(sign_extend_number(instruction.itype.imm, 12)))], 8);
+            processor->R[instruction.itype.rd] = sign_extend_number(load(memory, processor->R[instruction.itype.rs1] + 
+                instruction.itype.imm, LENGTH_BYTE), 8);
             break;
         case 0x1:
-            processor->R[instruction.itype.rd] = 
-                sign_extend_number((memory[((sWord)processor->R[instruction.itype.rs1]) + 
-                    ((sWord)(sign_extend_number(instruction.itype.imm, 12))) + 1] << 8) + 
-                    memory[((sWord)processor->R[instruction.itype.rs1]) + 
-                    ((sWord)(sign_extend_number(instruction.itype.imm, 12)))], 16);
+            processor->R[instruction.itype.rd] = sign_extend_number(load(memory, processor->R[instruction.itype.rs1] + 
+                instruction.itype.imm, LENGTH_HALF_WORD), 16);
             break;
         case 0x2:
-            processor->R[instruction.itype.rd] = 
-                (memory[((sWord)processor->R[instruction.itype.rs1]) + 
-                    ((sWord)(sign_extend_number(instruction.itype.imm, 12))) + 3] << 24) + 
-                        (memory[((sWord)processor->R[instruction.itype.rs1]) + 
-                    ((sWord)(sign_extend_number(instruction.itype.imm, 12))) + 2] << 16) + 
-                        (memory[((sWord)processor->R[instruction.itype.rs1]) + 
-                    ((sWord)(sign_extend_number(instruction.itype.imm, 12))) + 1] << 8) + 
-                        memory[((sWord)processor->R[instruction.itype.rs1]) + 
-                    ((sWord)(sign_extend_number(instruction.itype.imm, 12)))];
+            processor->R[instruction.itype.rd] = load(memory, processor->R[instruction.itype.rs1] + 
+                instruction.itype.imm, LENGTH_WORD);
             break;
         default:
             handle_invalid_instruction(instruction);
@@ -316,26 +303,18 @@ void execute_store(Instruction instruction, Processor *processor, Byte *memory) 
     switch (instruction.stype.funct3) {
         case 0x0:
             // sb
-            memory[(sWord)processor->R[instruction.stype.rs1] + (sWord)get_store_offset(instruction)] = 
-                (Byte)(processor->R[instruction.stype.rs2] & ((1U << 8) - 1));
+            store(memory,processor->R[instruction.stype.rs1] + get_store_offset(instruction), 
+                LENGTH_BYTE, processor->R[instruction.stype.rs2]);
             break;
         case 0x1:
             // sh
-            memory[(sWord)processor->R[instruction.stype.rs1] + (sWord)get_store_offset(instruction)] = 
-                (Byte)(processor->R[instruction.stype.rs2] & ((1U << 8) - 1));
-            memory[(sWord)processor->R[instruction.stype.rs1] + (sWord)get_store_offset(instruction) + 1] = 
-                (Byte)((processor->R[instruction.stype.rs2] >> 8) & ((1U << 8) - 1));
+            store(memory,processor->R[instruction.stype.rs1] + get_store_offset(instruction), 
+                LENGTH_HALF_WORD, processor->R[instruction.stype.rs2]);
             break;
         case 0x2:
             // sw
-            memory[(sWord)processor->R[instruction.stype.rs1] + (sWord)get_store_offset(instruction)] = 
-                (Byte)(processor->R[instruction.stype.rs2] & ((1U << 8) - 1));
-            memory[(sWord)processor->R[instruction.stype.rs1] + (sWord)get_store_offset(instruction) + 1] = 
-                (Byte)((processor->R[instruction.stype.rs2] >> 8) & ((1U << 8) - 1));
-            memory[(sWord)processor->R[instruction.stype.rs1] + (sWord)get_store_offset(instruction) + 2] = 
-                (Byte)((processor->R[instruction.stype.rs2] >> 16) & ((1U << 8) - 1));
-            memory[(sWord)processor->R[instruction.stype.rs1] + (sWord)get_store_offset(instruction) + 3] = 
-                (Byte)(processor->R[instruction.stype.rs2] >> 24);
+            store(memory,processor->R[instruction.stype.rs1] + get_store_offset(instruction), 
+                LENGTH_WORD, processor->R[instruction.stype.rs2]);
             break;
         default:
             handle_invalid_instruction(instruction);
