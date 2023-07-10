@@ -58,15 +58,16 @@ unsigned long long address_to_block(const unsigned long long address,
 // Return the cache tag of an address
 unsigned long long cache_tag(const unsigned long long address,
                              const Cache *cache) {
-  /* YOUR CODE HERE */
-  return 0;
+  int shift = 64 - cache->setBits - cache->blockBits;
+  return (unsigned long long)address >> shift;
 }
 
 // Return the cache set index of the address
 unsigned long long cache_set(const unsigned long long address,
                              const Cache *cache) {
-  /* YOUR CODE HERE */
-  return 0;
+  int shift = cache->blockBits;
+  unsigned long long bitMask = ((1U << cache->setBits) - 1);
+  return ((unsigned long long)address >> shift) & bitMask;
 }
 
 // Check if the address is found in the cache. If so, return true. else return false.
