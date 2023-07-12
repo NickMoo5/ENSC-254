@@ -41,8 +41,28 @@ void print_result(result r) {
  *             address in the return "result" struct. Update miss_count and eviction_count.
  */
 result operateCache(const unsigned long long address, Cache *cache) {
-  /* YOUR CODE HERE */
   result r;
+  unsigned long long victim;
+  cache->sets[cache_set(address, cache)].lru_clock++;
+  if (probe_cache(address, cache)) {            // cache hit
+    hit_cacheline(address, cache);
+    r.status = CACHE_HIT;
+    cache->hit_count++;
+  } else {      // miss
+    if (insert_cacheline(address, cache)) {     // Miss
+      r.status = CACHE_MISS;
+      r.insert_block_addr = address_to_block(address, cache);
+      cache->miss_count++;
+    } else {                                    // Eviction
+      victim = victim_cacheline(address, cache);
+      replace_cacheline(victim, address, cache);
+      r.status = CACHE_EVICT;
+      r.victim_block_addr = victim;
+      r.insert_block_addr = address_to_block(address, cache);
+      cache->miss_count++;
+      cache->eviction_count++;
+    }
+  }
   return r;
 }
 
@@ -51,34 +71,54 @@ result operateCache(const unsigned long long address, Cache *cache) {
 // i.e., byte offset bits are cleared to 0
 unsigned long long address_to_block(const unsigned long long address,
                                 const Cache *cache) {
-  /* YOUR CODE HERE */
-  return 0;
+  return (address >> cache->blockBits) << cache->blockBits;
 }
 
 // Return the cache tag of an address
 unsigned long long cache_tag(const unsigned long long address,
                              const Cache *cache) {
-  /* YOUR CODE HERE */
-  return 0;
+  unsigned long long retVal;
+  int shift = cache->setBits + cache->blockBits;    // setIndexbits + blockOffsetBits to get the leftmost bits
+  retVal = (unsigned long long)address >> shift;    // unsigned for logical shift (no sign-extension)
+  return retVal;
 }
 
 // Return the cache set index of the address
 unsigned long long cache_set(const unsigned long long address,
                              const Cache *cache) {
-  /* YOUR CODE HERE */
-  return 0;
+  unsigned long long retVal;
+  int shift = cache->blockBits;
+  unsigned long long bitMask = ((1U << cache->setBits) - 1);  
+  retVal = ((unsigned long long)address >> shift) & bitMask;    // Pull out index bits (in between tag and offset bits)
+  return retVal;
 }
 
 // Check if the address is found in the cache. If so, return true. else return false.
 bool probe_cache(const unsigned long long address, const Cache *cache) {
-  /* YOUR CODE HERE */
+  unsigned long long setIndex = cache_set(address, cache);    
+  unsigned long long tag = cache_tag(address, cache);
+
+  for (int j = 0; j < cache->linesPerSet; j++) {        // loop through lines in set
+    if (cache->sets[setIndex].lines[j].valid == true)   // check if valid, if not valid -> it's empty and has no tag
+      if (tag == cache->sets[setIndex].lines[j].tag)    
+        return true;
+  }
   return false;
 }
 
 // Access address in cache. Called only if probe is successful.
 // Update the LRU (least recently used) or LFU (least frequently used) counters.
 void hit_cacheline(const unsigned long long address, Cache *cache){
-  /* YOUR CODE HERE */
+  unsigned long long setIndex = cache_set(address, cache);
+  unsigned long long tag = cache_tag(address, cache);
+
+  for (int j = 0; j < cache->linesPerSet; j++) {      // loop through lines in set
+      if (tag == cache->sets[setIndex].lines[j].tag) {    
+        cache->sets[setIndex].lines[j].access_counter++;
+        cache->sets[setIndex].lines[j].lru_clock = cache->sets[setIndex].lru_clock; 
+        return;
+      }
+  }
  }
 
 /* This function is only called if probe_cache returns false, i.e., the address is
@@ -92,8 +132,20 @@ void hit_cacheline(const unsigned long long address, Cache *cache){
  * Otherwise, it returns false.  
  */ 
 bool insert_cacheline(const unsigned long long address, Cache *cache) {
-  /* YOUR CODE HERE */
-   return false;
+  unsigned long long setIndex = cache_set(address, cache);
+  unsigned long long tag = cache_tag(address, cache);
+
+  for (int j = 0; j < cache->linesPerSet; j++) {            // Loop through lines of set
+    if (cache->sets[setIndex].lines[j].valid == false) {    // find empty line
+      cache->sets[setIndex].lines[j].valid = true;
+      cache->sets[setIndex].lines[j].tag = tag;
+      cache->sets[setIndex].lines[j].block_addr = address_to_block(address, cache);
+      cache->sets[setIndex].lines[j].access_counter = 1;
+      cache->sets[setIndex].lines[j].lru_clock = cache->sets[setIndex].lru_clock; 
+      return true;
+    }
+  }
+  return false;
 }
 
 // If there is no empty cacheline, this method figures out which cacheline to replace
@@ -101,8 +153,30 @@ bool insert_cacheline(const unsigned long long address, Cache *cache) {
 // of the victim cacheline; note we no longer have access to the full address of the victim
 unsigned long long victim_cacheline(const unsigned long long address,
                                 const Cache *cache) {
-  /* YOUR CODE HERE */
-   return 0;
+  unsigned long long setIndex = cache_set(address, cache);
+  unsigned long long tag = cache_tag(address, cache);
+  Line victim = cache->sets[setIndex].lines[0];     // set first line as victim for comparision
+
+  if (cache->lfu == 0) {    // Least Recently Used
+    for (int j = 1; j < cache->linesPerSet; j++) {
+      if (cache->sets[setIndex].lines[j].lru_clock < victim.lru_clock) {    // Set lowest LRU clock to victim
+        victim = cache->sets[setIndex].lines[j];
+      }
+    }           
+    return victim.block_addr;                     
+  } else {    // Least Frequently Used
+    for (int j = 1; j < cache->linesPerSet; j++) {
+      if (cache->sets[setIndex].lines[j].access_counter < victim.access_counter) {    // Set lowest access counter to victim
+        victim = cache->sets[setIndex].lines[j];
+      } else if (cache->sets[setIndex].lines[j].access_counter == victim.access_counter) {    // Use LRU if LFU clock equal
+        if (cache->sets[setIndex].lines[j].lru_clock < victim.lru_clock) {
+          victim = cache->sets[setIndex].lines[j];
+        }
+      }
+    }           
+    return victim.block_addr; 
+  }
+  return 0;
 }
 
 /* Replace the victim cacheline with the new address to insert. Note for the victim cachline,
@@ -112,19 +186,46 @@ unsigned long long victim_cacheline(const unsigned long long address,
  */
 void replace_cacheline(const unsigned long long victim_block_addr,
 		       const unsigned long long insert_addr, Cache *cache) {
-  /* YOUR CODE HERE */
+  unsigned long long setIndex = cache_set(victim_block_addr, cache);
+  unsigned long long tag = cache_tag(victim_block_addr, cache);
+
+  for (int j = 0; j < cache->linesPerSet; j++) {
+    if (tag == cache->sets[setIndex].lines[j].tag) {      
+      cache->sets[setIndex].lines[j].block_addr = address_to_block(insert_addr, cache);
+      cache->sets[setIndex].lines[j].access_counter = 1;
+      cache->sets[setIndex].lines[j].tag = cache_tag(insert_addr, cache);
+      cache->sets[setIndex].lines[j].lru_clock = cache->sets[setIndex].lru_clock; 
+      return;
+    }
+  }
 }
 
 // allocate the memory space for the cache with the given cache parameters
 // and initialize the cache sets and lines.
 // Initialize the cache name to the given name 
 void cacheSetUp(Cache *cache, char *name) {
-  /* YOUR CODE HERE */
+  cache->name = name;
+  long long numSets = pow(2, cache->setBits);
+  cache->sets = (Set*) malloc(numSets * sizeof(Set));     // mem for sets
+  for (int i = 0; i < numSets; i++) {
+    cache->sets[i].lines = (Line*) malloc(cache->linesPerSet * sizeof(Line));     // mem for lines in each set
+    for (int j = 0; j < cache->linesPerSet; j++) {
+      cache->sets[i].lines[j].valid = false;     // init all lines to invalid (empty)
+    }
+    cache->sets[i].lru_clock = 0;
+  }
+  cache->hit_count = 0;
+  cache->miss_count = 0;
+  cache->eviction_count = 0;
 }
 
 // deallocate the memory space for the cache
 void deallocate(Cache *cache) {
-  /* YOUR CODE HERE */
+  long long setSize = pow(2, cache->setBits);
+  for (int i = 0; i < setSize; i++) {
+    free(cache->sets[i].lines);
+  }
+  free(cache->sets);
 }
 
 // print out summary stats for the cache
