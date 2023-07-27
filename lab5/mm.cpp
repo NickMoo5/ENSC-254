@@ -261,7 +261,7 @@ void gemm_tile_simd_par(float C[NI*NJ], float A[NI*NK], float B[NK*NJ], float al
   //A is NIxNK
   //B is NKxNJ
   //C is NIxNJ
-  int i, j, k, ii, jj;
+  int a, i, j, k, ii, jj;
 
   // Load vectors for alpha multiplication
   __m256 alpha_vec = _mm256_set1_ps(alpha);
@@ -271,16 +271,18 @@ void gemm_tile_simd_par(float C[NI*NJ], float A[NI*NK], float B[NK*NJ], float al
 
   // Loop tiling parameters
   int tile_size = 16; // Adjust the tile size as needed
-
-  #pragma omp parallel for
-  for (i = 0; i < NI; i++) {
-    for (j = 0; j < NJ; j++) {
-      C[i * NJ + j] *= beta;
-    }
-  }
   
   #pragma omp parallel for num_threads(20)
   for (i = 0; i < NI; i += tile_size) {
+    for (a = 0; a < tile_size; a++) {
+      for (j = 0; j < NJ; j+=8) {
+        //C[(i+a)+NJ+j] *= beta;  
+        __m256 cVec = _mm256_loadu_ps(&C[(i+a)*NJ+j]);
+        cVec = _mm256_mul_ps(cVec, beta_vec);
+        _mm256_storeu_ps(&C[(i+a)*NJ+j], cVec);
+      }
+    }
+    
     for (k = 0; k < NK; k += tile_size) {
       for (j = 0; j < NJ; j += tile_size) {
           for (ii = i; ii < i + tile_size; ii++) {
@@ -298,76 +300,8 @@ void gemm_tile_simd_par(float C[NI*NJ], float A[NI*NK], float B[NK*NJ], float al
             }
           }
         }
-      }
+    }
   }
-
-  /*#pragma omp parallel for
-  for (i = 0; i < NI; i += tile_size) {
-        for (k = 0; k < NK; k += tile_size) {
-            for (j = 0; j < NJ; j += tile_size) {
-                for (ii = i; ii < i + tile_size; ii++) {
-                    for (jj = j; jj < j + tile_size; jj += simdSize) {
-                        __m256 sum0 = _mm256_setzero_ps();
-                        __m256 sum1 = _mm256_setzero_ps();
-                        __m256 sum2 = _mm256_setzero_ps();
-                        __m256 sum3 = _mm256_setzero_ps();
-                        __m256 sum4 = _mm256_setzero_ps();
-                        __m256 sum5 = _mm256_setzero_ps();
-                        __m256 sum6 = _mm256_setzero_ps();
-                        __m256 sum7 = _mm256_setzero_ps();
-
-                        for (int kk = k; kk < k + tile_size; kk++) {
-                            __m256 aVect = _mm256_set1_ps(alpha * A[ii * NK + kk]);
-                            __m256 bVect0 = _mm256_loadu_ps(&B[kk * NJ + jj]);
-                            __m256 bVect1 = _mm256_loadu_ps(&B[kk * NJ + jj + 8]);
-                            __m256 bVect2 = _mm256_loadu_ps(&B[kk * NJ + jj + 16]);
-                            __m256 bVect3 = _mm256_loadu_ps(&B[kk * NJ + jj + 24]);
-                            __m256 bVect4 = _mm256_loadu_ps(&B[kk * NJ + jj + 32]);
-                            __m256 bVect5 = _mm256_loadu_ps(&B[kk * NJ + jj + 40]);
-                            __m256 bVect6 = _mm256_loadu_ps(&B[kk * NJ + jj + 48]);
-                            __m256 bVect7 = _mm256_loadu_ps(&B[kk * NJ + jj + 56]);
-
-                            sum0 = _mm256_add_ps(sum0, _mm256_mul_ps(aVect, bVect0));
-                            sum1 = _mm256_add_ps(sum1, _mm256_mul_ps(aVect, bVect1));
-                            sum2 = _mm256_add_ps(sum2, _mm256_mul_ps(aVect, bVect2));
-                            sum3 = _mm256_add_ps(sum3, _mm256_mul_ps(aVect, bVect3));
-                            sum4 = _mm256_add_ps(sum4, _mm256_mul_ps(aVect, bVect4));
-                            sum5 = _mm256_add_ps(sum5, _mm256_mul_ps(aVect, bVect5));
-                            sum6 = _mm256_add_ps(sum6, _mm256_mul_ps(aVect, bVect6));
-                            sum7 = _mm256_add_ps(sum7, _mm256_mul_ps(aVect, bVect7));
-                        }
-
-                        __m256 cVect0 = _mm256_loadu_ps(&C[ii * NJ + jj]);
-                        __m256 cVect1 = _mm256_loadu_ps(&C[ii * NJ + jj + 8]);
-                        __m256 cVect2 = _mm256_loadu_ps(&C[ii * NJ + jj + 16]);
-                        __m256 cVect3 = _mm256_loadu_ps(&C[ii * NJ + jj + 24]);
-                        __m256 cVect4 = _mm256_loadu_ps(&C[ii * NJ + jj + 32]);
-                        __m256 cVect5 = _mm256_loadu_ps(&C[ii * NJ + jj + 40]);
-                        __m256 cVect6 = _mm256_loadu_ps(&C[ii * NJ + jj + 48]);
-                        __m256 cVect7 = _mm256_loadu_ps(&C[ii * NJ + jj + 56]);
-
-                        cVect0 = _mm256_add_ps(cVect0, sum0);
-                        cVect1 = _mm256_add_ps(cVect1, sum1);
-                        cVect2 = _mm256_add_ps(cVect2, sum2);
-                        cVect3 = _mm256_add_ps(cVect3, sum3);
-                        cVect4 = _mm256_add_ps(cVect4, sum4);
-                        cVect5 = _mm256_add_ps(cVect5, sum5);
-                        cVect6 = _mm256_add_ps(cVect6, sum6);
-                        cVect7 = _mm256_add_ps(cVect7, sum7);
-
-                        _mm256_storeu_ps(&C[ii * NJ + jj], cVect0);
-                        _mm256_storeu_ps(&C[ii * NJ + jj + 8], cVect1);
-                        _mm256_storeu_ps(&C[ii * NJ + jj + 16], cVect2);
-                        _mm256_storeu_ps(&C[ii * NJ + jj + 24], cVect3);
-                        _mm256_storeu_ps(&C[ii * NJ + jj + 32], cVect4);
-                        _mm256_storeu_ps(&C[ii * NJ + jj + 40], cVect5);
-                        _mm256_storeu_ps(&C[ii * NJ + jj + 48], cVect6);
-                        _mm256_storeu_ps(&C[ii * NJ + jj + 56], cVect7);
-                    }
-                }
-            }
-        }
-    }*/
 
 }
 
