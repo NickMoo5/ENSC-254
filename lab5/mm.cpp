@@ -59,23 +59,6 @@ void print_and_valid_array_sum(float C[NI*NJ])
     printf("Correct result. Sum of C array = %f\n", sum);
 }
 
-// Function to allocate memory for a matrix
-int** allocateMatrix(int numRows, int numCols) {
-    int** matrix = (int**)malloc(numRows * sizeof(int*));
-    for (int i = 0; i < numRows; i++) {
-        matrix[i] = (int*)malloc(numCols * sizeof(int));
-    }
-    return matrix;
-}
-
-// Function to deallocate memfla30@ensc-hacc-22dlory for a matrix
-void deallocateMatrix(int** matrix, int numRows) {
-    for (int i = 0; i < numRows; i++) {
-        free(matrix[i]);
-    }
-    free(matrix);
-}
-
 
 /* Main computational kernel: baseline. The whole function will be timed,
    including the call and return. DO NOT change the baseline.*/
@@ -104,33 +87,30 @@ void gemm_base(float C[NI*NJ], float A[NI*NK], float B[NK*NJ], float alpha, floa
 static
 void gemm_tile(float C[NI*NJ], float A[NI*NK], float B[NK*NJ], float alpha, float beta)
 {
-  int i, j, k, ii, jj;
-
 // => Form C := alpha*A*B + beta*C,
-//A is NIxNK
-//B is NKxNJ
-//C is NIxNJ
+  //A is NIxNK
+  //B is NKxNJ
+  //C is NIxNJ
+  int i, j, k, ii, jj, kk;
+  float sum;
 
-// Loop tiling parameters
-  int tile_size = 16; // Adjust the tile size as needed, depending on cache size and matrix size.
-
+  // Loop tiling parameters
+  int tile_size = 16; 
+  
   for (i = 0; i < NI; i += tile_size) {
     for (j = 0; j < NJ; j += tile_size) {
-      // Initialize the tiles for the current iteration
       float C_tile[tile_size * tile_size] = {0.0};
       
-      // Perform the matrix multiplication for the current tile
       for (k = 0; k < NK; k += tile_size) {
         for (ii = i; ii < i + tile_size; ii++) {
           for (jj = j; jj < j + tile_size; jj++) {
-            for (int kk = k; kk < k + tile_size; kk++) {
+            for (kk = k; kk < k + tile_size; kk++) {
               C_tile[(ii - i) * tile_size + (jj - j)] += alpha * A[ii * NK + kk] * B[kk * NJ + jj];
             }
           }
         }
       }
 
-      // Update the main C matrix with the results from the current tile
       for (ii = i; ii < i + tile_size; ii++) {
         for (jj = j; jj < j + tile_size; jj++) {
           C[ii * NJ + jj] = beta * C[ii * NJ + jj] + C_tile[(ii - i) * tile_size + (jj - j)];
@@ -138,59 +118,6 @@ void gemm_tile(float C[NI*NJ], float A[NI*NK], float B[NK*NJ], float alpha, floa
       }
     }
   }
-
-}
-
-static inline void matrix_multiply(float *C_tile, float *A, float *B, float alpha) {
-    // Load vectors for alpha multiplication
-    __m256 alpha_vec = _mm256_set1_ps(alpha);
-
-    for (int i = 0; i < TILE_SIZE; i++) {
-        for (int k = 0; k < TILE_SIZE; k++) {
-            // Load B elements for multiplication
-            __m256 B_vec = _mm256_broadcast_ss(&B[k * TILE_SIZE + i]);
-
-            for (int j = 0; j < TILE_SIZE; j += 8) {
-                // Load A elements for multiplication
-                __m256 A_vec = _mm256_loadu_ps(&A[i * TILE_SIZE + k]);
-
-                // Multiply: result = alpha * A[i * TILE_SIZE + k] * B[k * TILE_SIZE + j]
-                __m256 result = _mm256_mul_ps(alpha_vec, _mm256_mul_ps(A_vec, B_vec));
-
-                // Load C_tile elements for addition
-                __m256 C_tile_vec = _mm256_loadu_ps(&C_tile[i * TILE_SIZE + j]);
-
-                // Add the result to C_tile: C_tile[i * TILE_SIZE + j] += result
-                C_tile_vec = _mm256_add_ps(C_tile_vec, result);
-
-                // Store the result back to C_tile
-                _mm256_storeu_ps(&C_tile[i * TILE_SIZE + j], C_tile_vec);
-            }
-        }
-    }
-}
-
-static void gemm_tile_simds(float C[NI * NJ], float A[NI * NK], float B[NK * NJ], float alpha, float beta) {
-    int i, j, k, ii, jj;
-
-    for (i = 0; i < NI; i += TILE_SIZE) {
-        for (j = 0; j < NJ; j += TILE_SIZE) {
-            // Initialize the tiles for the current iteration
-            float C_tile[TILE_SIZE * TILE_SIZE] = {0.0};
-
-            // Perform the matrix multiplication for the current tile
-            for (k = 0; k < NK; k += TILE_SIZE) {
-                matrix_multiply(C_tile, &A[i * NK + k], &B[k * NJ + j], alpha);
-            }
-
-            // Update the main C matrix with the results from the current tile
-            for (ii = i; ii < i + TILE_SIZE; ii++) {
-                for (jj = j; jj < j + TILE_SIZE; jj++) {
-                    C[ii * NJ + jj] = beta * C[ii * NJ + jj] + C_tile[(ii - i) * TILE_SIZE + (jj - j)];
-                }
-            }
-        }
-    }
 }
 
 
@@ -202,81 +129,20 @@ void gemm_tile_simd(float C[NI*NJ], float A[NI*NK], float B[NK*NJ], float alpha,
   //A is NIxNK
   //B is NKxNJ
   //C is NIxNJ
-  int i, j, k, ii, jj;
+  int a, i, j, k, ii, jj, kk;
 
-  // Load vectors for alpha multiplication
+  // Load vectors 
   __m256 alpha_vec = _mm256_set1_ps(alpha);
 
   __m256 beta_vec = _mm256_set1_ps(beta);
 
 
   // Loop tiling parameters
-  int tile_size = 16; // Adjust the tile size as needed
-  for (i = 0; i < NI; i++) {
-    for (j = 0; j < NJ; j+=8) {
-      // Load 8 elements from C into an AVX2 register
-      __m256 c_vec = _mm256_loadu_ps(&C[i * NJ + j]);
-
-      // Multiply the elements with beta
-      c_vec = _mm256_mul_ps(c_vec, beta_vec);
-
-      // Store the results back to C
-      _mm256_storeu_ps(&C[i * NJ + j], c_vec);
-    }
-  }
+  int tile_size = 16; 
   
-  for (i = 0; i < NI; i += tile_size) {
-    for (k = 0; k < NK; k += tile_size) {
-      for (j = 0; j < NJ; j += tile_size) {
-          for (ii = i; ii < i + tile_size; ii++) {
-            for (jj = j; jj < j + tile_size; jj+=8) {
-              __m256 sum = _mm256_setzero_ps();
-              for (int kk = k; kk < k + tile_size; kk++) {
-                //__m256 aVect = _mm256_set1_ps(A[ii * NK + kk]);
-                //aVect = _mm256_mul_ps(aVect, alpha_vec);
-
-                __m256 aVect = _mm256_set1_ps(alpha * A[ii * NK + kk]);
-                __m256 bVect = _mm256_loadu_ps(&B[kk * NJ + jj]); // Load 8 elements of B
-                sum = _mm256_add_ps(sum, _mm256_mul_ps(aVect, bVect));
-              }
-              __m256 cVect = _mm256_loadu_ps(&C[ii * NJ + jj]);
-              cVect = _mm256_add_ps(cVect, sum);
-              _mm256_storeu_ps(&C[ii * NJ + jj], cVect);
-            }
-          }
-        }
-      }
-  }
-
-}
-
-
-
-/* Main computational kernel: with tiling, simd, and parallelization optimizations. */
-static
-void gemm_tile_simd_par(float C[NI*NJ], float A[NI*NK], float B[NK*NJ], float alpha, float beta)
-{
-
-// => Form C := alpha*A*B + beta*C,
-  //A is NIxNK
-  //B is NKxNJ
-  //C is NIxNJ
-  int a, i, j, k, ii, jj;
-
-  // Load vectors for alpha multiplication
-  __m256 alpha_vec = _mm256_set1_ps(alpha);
-
-  __m256 beta_vec = _mm256_set1_ps(beta);
-
-
-  // Loop tiling parameters
-  int tile_size = 16; // Adjust the tile size as needed
-  
-  #pragma omp parallel for num_threads(20)
   for (i = 0; i < NI; i += tile_size) {
     for (a = 0; a < tile_size; a++) {
       for (j = 0; j < NJ; j+=8) {
-        //C[(i+a)+NJ+j] *= beta;  
         __m256 cVec = _mm256_loadu_ps(&C[(i+a)*NJ+j]);
         cVec = _mm256_mul_ps(cVec, beta_vec);
         _mm256_storeu_ps(&C[(i+a)*NJ+j], cVec);
@@ -288,10 +154,65 @@ void gemm_tile_simd_par(float C[NI*NJ], float A[NI*NK], float B[NK*NJ], float al
           for (ii = i; ii < i + tile_size; ii++) {
             for (jj = j; jj < j + tile_size; jj+=8) {
               __m256 sum = _mm256_setzero_ps();
-              for (int kk = k; kk < k + tile_size; kk++) {
+              for (kk = k; kk < k + tile_size; kk++) {
 
                 __m256 aVect = _mm256_set1_ps(alpha * A[ii * NK + kk]);
-                __m256 bVect = _mm256_loadu_ps(&B[kk * NJ + jj]); // Load 8 elements of B
+                __m256 bVect = _mm256_loadu_ps(&B[kk * NJ + jj]); 
+                sum = _mm256_add_ps(sum, _mm256_mul_ps(aVect, bVect));
+              }
+              __m256 cVect = _mm256_loadu_ps(&C[ii * NJ + jj]);
+              cVect = _mm256_add_ps(cVect, sum);
+              _mm256_storeu_ps(&C[ii * NJ + jj], cVect);
+            }
+          }
+        }
+    }
+  }
+
+
+}
+
+
+
+/* Main computational kernel: with tiling, simd, and parallelization optimizations. */
+static
+void gemm_tile_simd_par(float C[NI*NJ], float A[NI*NK], float B[NK*NJ], float alpha, float beta)
+{
+
+  // => Form C := alpha*A*B + beta*C,
+  //A is NIxNK
+  //B is NKxNJ
+  //C is NIxNJ
+  int a, i, j, k, ii, jj, kk;
+
+  // Load vectors 
+  __m256 alpha_vec = _mm256_set1_ps(alpha);
+
+  __m256 beta_vec = _mm256_set1_ps(beta);
+
+
+  // Loop tiling parameters
+  int tile_size = 16; 
+  
+  #pragma omp parallel for num_threads(16)
+  for (i = 0; i < NI; i += tile_size) {
+    for (a = 0; a < tile_size; a++) {
+      for (j = 0; j < NJ; j+=8) {
+        __m256 cVec = _mm256_loadu_ps(&C[(i+a)*NJ+j]);
+        cVec = _mm256_mul_ps(cVec, beta_vec);
+        _mm256_storeu_ps(&C[(i+a)*NJ+j], cVec);
+      }
+    }
+    
+    for (k = 0; k < NK; k += tile_size) {
+      for (j = 0; j < NJ; j += tile_size) {
+          for (ii = i; ii < i + tile_size; ii++) {
+            for (jj = j; jj < j + tile_size; jj+=8) {
+              __m256 sum = _mm256_setzero_ps();
+              for (kk = k; kk < k + tile_size; kk++) {
+
+                __m256 aVect = _mm256_set1_ps(alpha * A[ii * NK + kk]);
+                __m256 bVect = _mm256_loadu_ps(&B[kk * NJ + jj]); 
                 sum = _mm256_add_ps(sum, _mm256_mul_ps(aVect, bVect));
               }
               __m256 cVect = _mm256_loadu_ps(&C[ii * NJ + jj]);
