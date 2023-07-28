@@ -194,7 +194,7 @@ void gemm_tile_simd_par(float C[NI*NJ], float A[NI*NK], float B[NK*NJ], float al
   // Loop tiling parameters
   int tile_size = 16; 
   
-  #pragma omp parallel for num_threads(16)
+  #pragma omp parallel for num_threads(20)
   for (i = 0; i < NI; i += tile_size) {
     for (a = 0; a < tile_size; a++) {
       for (j = 0; j < NJ; j+=8) {
